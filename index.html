@@ -98,7 +98,7 @@
                 const lines = rawText.replace(/\r/g, '').split('\n');
                 if (lines.length <= 1) return;
 
-                const keys = ["Name", "Folder", "Category", "Backup", "Size", "Original File", "Original Storage", "Backup Site"];
+                const keys = ["Name", "Folder", "Category", "Backup", "Size", "Original File", "Current Storage", "Backup Site"];
 
                 for (let i = 1; i < lines.length; i++) {
                     const currentLine = lines[i].trim();
