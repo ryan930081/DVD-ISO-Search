@@ -1,4 +1,4 @@
-Name	Folder	Category	Backup	Size	Original File	Original Storage	Backup Site
+Name	Folder	Category	Backup	Size	Original File	Current Storage	Backup Site
 7號房的禮物	4G	Movie	No	4,384,761,856	Yes	Seagate 4TB	
 一級機密	4G	Movie	No	4,379,494,400	Yes	Seagate 4TB	
 一週斃命：不死退費	4G	Movie	No	4,345,671,680	Yes	Seagate 4TB	
