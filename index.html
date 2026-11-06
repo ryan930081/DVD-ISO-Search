@@ -210,6 +210,7 @@
         }
 
         // 點擊表頭排序
+                // 🛠️ 請找到 function sortTable(key) 並將這整段替換進去
         function sortTable(key) {
             if (currentSortKey === key) {
                 isAscending = !isAscending;
@@ -221,8 +222,8 @@
             const currentData = getFilteredData();
 
             currentData.sort((a, b) => {
-                let valA = a[key];
-                let valB = b[key];
+                let valA = a[key] || '';
+                let valB = b[key] || '';
 
                 if (key === 'Size') {
                     const numA = parseInt(valA.replace(/,/g, '')) || 0;
@@ -246,6 +247,7 @@
         });
 
         window.addEventListener('DOMContentLoaded', fetchAndParseData);
+
     </script>
 </body>
 </html>
