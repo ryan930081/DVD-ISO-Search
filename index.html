@@ -52,7 +52,7 @@
                             <th class="py-3.5 px-4 text-center cursor-pointer hover:bg-gray-700 transition" onclick="sortTable('Backup')">Backup ↕️</th>
                             <th class="py-3.5 px-4 cursor-pointer hover:bg-gray-700 transition" onclick="sortTable('Size')">Size ↕️</th>
                             <th class="py-3.5 px-4 text-center cursor-pointer hover:bg-gray-700 transition" onclick="sortTable('Original File')">Original File ↕️</th>
-                            <th class="py-3.5 px-4 cursor-pointer hover:bg-gray-700 transition" onclick="sortTable('Original Storage')">Original Storage ↕️</th>
+                            <th class="py-3.5 px-4 cursor-pointer hover:bg-gray-700 transition" onclick="sortTable('Original Storage')">Current storage ↕️</th>
                             <th class="py-3.5 px-4 cursor-pointer hover:bg-gray-700 transition" onclick="sortTable('Backup Site')">Backup Site ↕️</th>
                         </tr>
                     </thead>
@@ -174,7 +174,7 @@
                     <td class="py-3 px-4 text-center">${backupBadge}</td>
                     <td class="py-3 px-4 font-mono text-gray-400">${formattedSize}</td>
                     <td class="py-3 px-4 text-center font-mono">${orgFileBadge}</td>
-                    <td class="py-3 px-4 text-emerald-400/90 font-medium">${item["Original Storage"]}</td>
+                    <td class="py-3 px-4 text-emerald-400/90 font-medium">${item["Current Storage"]}</td>
                     <td class="py-3 px-4 text-gray-400">${item["Backup Site"]}</td>
                 `;
                 tableBody.appendChild(tr);
