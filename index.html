@@ -95,44 +95,65 @@
         const movieCount = document.getElementById('movieCount');
         const noResult = document.getElementById('noResult');
 
-        async function fetchAndParseData() {
-    try {
-        movieCount.textContent = "正在連線讀取 Google 試算表...";
-        
-        const part1 = 'https://google.com';
-        const part2 = '2PACX-1vSczFU2Rpp6Ou4xend8PRDndYNux_I65GSEQdmjOrLI4pwcC_89wWdrNZdqohNXDMdKm3L9UzWNrgGw';
-        const part3 = '/pub?gid=1459482754&single=true&output=tsv';
-        const tsvUrl = part1 + part2 + part3;
-        
-        const response = await fetch(tsvUrl);
-        if (!response.ok) throw new Error('讀取失敗，請確認試算表已發布到網路');
-        
-        const rawText = await response.text();
-        const lines = rawText.replace(/\r/g, '').split('\n');
-        if (lines.length <= 1) return;
+        function fetchAndParseData() {
+    movieCount.textContent = "正在連線讀取 Google 試算表...";
 
-        const keys = ["Name", "Folder", "Category", "Backup", "Size", "Original File", "Current Storage", "Backup Site"];
-        dvdDatabase = new Array();
+    // 拆解網址以確保 100% 完整，不會被縮寫或阻擋
+    const d1 = 'https://google.com';
+    const d2 = '/spreadsheets/d/';
+    const sheetId = '1hvu5MGeDlieav33qFlDuLdDI0U0LQ4CxfxtZ3wc6b5U';
+    const gid = '1459482754';
+    const callbackName = 'loadSheetDataCallback';
 
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            const columns = lines[i].split('\t');
-            const item = {};
-            keys.forEach((key, index) => {
-                let val = columns[index] ? columns[index].trim() : "";
-                if (val.startsWith('="') && val.endsWith('"')) val = val.substring(2, val.length - 1);
-                else if (val.startsWith('"') && val.endsWith('"')) val = val.substring(1, val.length - 1);
-                item[key] = val || "-";
-            });
-            dvdDatabase.push(item);
+    // 設定接收資料的函式
+    window[callbackName] = function(response) {
+        try {
+            if (!response || response.status === 'error') {
+                throw new Error('試算表權限未開啟，請確認已設為「知道連結的任何人均可檢視」');
+            }
+
+            const rows = response.table.rows;
+            const keys = ["Name", "Folder", "Category", "Backup", "Size", "Original File", "Current Storage", "Backup Site"];
+            dvdDatabase = new Array();
+
+            for (let i = 0; i < rows.length; i++) {
+                const rowCells = rows[i].c;
+                if (!rowCells) continue;
+
+                // 自動跳過標題列
+                const firstCell = rowCells;
+                const firstVal = firstCell ? (firstCell.f || firstCell.v || '') : '';
+                if (i === 0 && firstVal.toString().trim() === 'Name') continue;
+
+                const item = {};
+                keys.forEach((key, index) => {
+                    const cell = rowCells[index];
+                    // 優先取用畫面顯示的格式 (f，保留千分位逗號)，若無則取原始值 (v)
+                    let val = cell ? (cell.f !== undefined && cell.f !== null ? cell.f : cell.v) : '';
+                    item[key] = (val !== null && val !== undefined && val.toString().trim() !== '') ? val.toString().trim() : '-';
+                });
+
+                if (item.Name !== '-') {
+                    dvdDatabase.push(item);
+                }
+            }
+
+            movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料，請輸入關鍵字搜尋`;
+        } catch (err) {
+            console.error(err);
+            movieCount.textContent = "載入失敗：" + err.message;
         }
-        
-        movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料，請輸入關鍵字搜尋`;
-    } catch (error) {
-        console.error(error);
-        movieCount.textContent = "載入失敗：" + error.message;
-    }
+    };
+
+    // 透過 script 標籤直接讀取，100% 繞過 Failed to fetch 限制
+    const script = document.createElement('script');
+    script.src = d1 + d2 + sheetId + '/gviz/tq?tqx=responseHandler:' + callbackName + '&gid=' + gid;
+    script.onerror = function() {
+        movieCount.textContent = "載入失敗：無法連線至 Google，請確認試算表已設為「知道連結的任何人均可檢視」";
+    };
+    document.body.appendChild(script);
 }
+
 
         function renderTable(data) {
             tableBody.innerHTML = '';
