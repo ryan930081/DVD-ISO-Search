@@ -162,27 +162,37 @@
         }
 
         function getFilteredData() {
-            const query = searchInput.value.toLowerCase().trim();
-            if (!query) return dvdDatabase;
+    const query = searchInput.value.toLowerCase().trim();
+    if (!query) return [];
 
-            return dvdDatabase.filter(item =>
-                (item.Name || '').toLowerCase().includes(query) ||
-                (item.Folder || '').toLowerCase().includes(query) ||
-                (item.Category || '').toLowerCase().includes(query) ||
-                (item.Backup || '').toLowerCase().includes(query) ||
-                (item.Size || '').toLowerCase().includes(query) ||
-                (item["Original File"] || '').toLowerCase().includes(query) ||
-                (item["Current Storage"] || '').toLowerCase().includes(query) ||
-                (item["Backup Site"] || '').toLowerCase().includes(query)
-            );
-        }
+    return dvdDatabase.filter(item =>
+        (item.Name || '').toLowerCase().includes(query) ||
+        (item.Folder || '').toLowerCase().includes(query) ||
+        (item.Category || '').toLowerCase().includes(query) ||
+        (item.Backup || '').toLowerCase().includes(query) ||
+        (item.Size || '').toLowerCase().includes(query) ||
+        (item["Original File"] || '').toLowerCase().includes(query) ||
+        (item["Current Storage"] || '').toLowerCase().includes(query) ||
+        (item["Backup Site"] || '').toLowerCase().includes(query)
+    );
+}
 
-        function doSearch() {
-            clearBtn.classList.toggle('hidden', !searchInput.value.trim());
-            renderTable(getFilteredData());
-        }
+function doSearch() {
+    const query = searchInput.value.trim();
+    clearBtn.classList.toggle('hidden', !query);
+    
+    if (!query) {
+        tableBody.innerHTML = '';
+        noResult.classList.add('hidden');
+        movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料，請輸入關鍵字搜尋`;
+        return;
+    }
+    
+    renderTable(getFilteredData());
+}
 
         function sortTable(key) {
+            if (!searchInput.value.trim()) return;
             if (currentSortKey === key) {
                 isAscending = !isAscending;
             } else {
