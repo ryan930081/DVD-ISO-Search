@@ -99,7 +99,6 @@
     try {
         movieCount.textContent = "正在連線讀取 Google 試算表...";
         
-        // 已為你填入最新轉存的 Google 試算表 ID 與分頁 GID
         const sheetId = '1hvu5MGeDlieav33qFlDuLdDI0U0LQ4CxfxtZ3wc6b5U';
         const gid = '1459482754';
         const url = `https://google.com{sheetId}/export?format=tsv&gid=${gid}`;
@@ -133,6 +132,7 @@
         movieCount.textContent = "載入失敗：" + error.message;
     }
 }
+
 
         function renderTable(data) {
             tableBody.innerHTML = '';
