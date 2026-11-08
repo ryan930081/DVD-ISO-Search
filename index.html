@@ -147,15 +147,16 @@
                 let formattedSize = item.Size || '-';
 
                 tr.innerHTML = `
-                    <td class="py-3 px-4 font-semibold text-gray-100 max-w-xs truncate" title="${item.Name}">${item.Name}</td>
-                    <td class="py-3 px-4 font-mono text-gray-400">${item.Folder}</td>
-                    <td class="py-3 px-4"><span class="bg-gray-900/60 px-2 py-0.5 rounded text-gray-400 border border-gray-700">${item.Category}</span></td>
-                    <td class="py-3 px-4 text-center">${backupBadge}</td>
-                    <td class="py-3 px-4 font-mono text-gray-400">${formattedSize}</td>
-                    <td class="py-3 px-4 text-center font-mono">${orgFileBadge}</td>
-                    <td class="py-3 px-4 text-emerald-400/90 font-medium">${item["Current Storage"]}</td>
-                    <td class="py-3 px-4 text-gray-400">${item["Backup Site"]}</td>
-                `;
+    <td class="py-3 px-4 font-semibold text-gray-100 max-w-xs truncate border border-gray-700" title="${item.Name}">${item.Name}</td>
+    <td class="py-3 px-4 font-mono text-gray-400 border border-gray-700">${item.Folder}</td>
+    <td class="py-3 px-4 border border-gray-700"><span class="bg-gray-900/60 px-2 py-0.5 rounded text-gray-400 border border-gray-700">${item.Category}</span></td>
+    <td class="py-3 px-4 text-center border border-gray-700">${backupBadge}</td>
+    <td class="py-3 px-4 font-mono text-gray-400 border border-gray-700">${formattedSize}</td>
+    <td class="py-3 px-4 text-center font-mono border border-gray-700">${orgFileBadge}</td>
+    <td class="py-3 px-4 text-emerald-400/90 font-medium border border-gray-700">${item["Current Storage"]}</td>
+    <td class="py-3 px-4 text-gray-400 border border-gray-700">${item["Backup Site"]}</td>
+`;
+
                 tableBody.appendChild(tr);
             });
         }
