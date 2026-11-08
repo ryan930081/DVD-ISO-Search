@@ -144,11 +144,7 @@
                     ? `<span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">YES</span>`
                     : `<span class="text-gray-500">${item["Original File"]}</span>`;
 
-                let formattedSize = item.Size;
-                const pureBytes = parseInt((formattedSize || '').replace(/,/g, ''));
-                if (!isNaN(pureBytes)) {
-                    formattedSize = (pureBytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-                }
+                let formattedSize = item.Size || '-';
 
                 tr.innerHTML = `
                     <td class="py-3 px-4 font-semibold text-gray-100 max-w-xs truncate" title="${item.Name}">${item.Name}</td>
