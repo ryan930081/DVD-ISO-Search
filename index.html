@@ -169,11 +169,14 @@
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-gray-700/40 transition duration-150 border-b border-gray-800/40';
 
-                const isBackupNo = (item.Backup || '').toLowerCase() === 'no' || item.Backup === '無';
-                const backupBadge = isBackupNo
-                    ? `<span class="bg-red-500/10 text-red-400 px-2 py-0.5 rounded border border-red-500/20 font-bold text-[10px]">NO</span>`
-                    : `<span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20 font-bold text-[10px]">YES</span>`;
-
+                                const backupStr = (item.Backup || '').toString().trim().toLowerCase();
+                let backupBadge = `<span class="text-gray-400 font-mono">${item.Backup || '-'}</span>`;
+                
+                if (backupStr === 'yes' || backupStr === 'y' || backupStr === '有' || backupStr === 'true') {
+                    backupBadge = `<span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20 font-bold text-[10px]">YES</span>`;
+                } else if (backupStr === 'no' || backupStr === 'n' || backupStr === '無' || backupStr === 'false') {
+                    backupBadge = `<span class="bg-red-500/10 text-red-400 px-2 py-0.5 rounded border border-red-500/20 font-bold text-[10px]">NO</span>`;
+                }
                 const isOrgFileYes = (item["Original File"] || '').toLowerCase() === 'yes' || item["Original File"] === '有';
                 const orgFileBadge = isOrgFileYes
                     ? `<span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">YES</span>`
