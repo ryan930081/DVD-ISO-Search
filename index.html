@@ -75,7 +75,7 @@
     </footer>
 
     <!-- 🟢 所有的 JavaScript 邏輯都已經完美收納在下方標籤中，不會再外流到畫面上了 🟢 -->
-    <script>
+        <script>
         let dvdDatabase = [];
         let currentSortKey = '';
         let isAscending = true;
@@ -87,12 +87,10 @@
         const movieCount = document.getElementById('movieCount');
         const noResult = document.getElementById('noResult');
 
-        // 自動讀取並精準解析指定的 DVD ISO list.txt
         async function fetchAndParseData() {
             try {
-                const targetFile = encodeURIComponent('DVD ISO list.txt');
-                const response = await fetch(targetFile);
-                if (!response.ok) throw new Error('NOT_FOUND');
+                const response = await fetch(encodeURIComponent('DVD ISO list.txt'));
+                if (!response.ok) throw new Error('檔案讀取失敗');
                 
                 const rawText = await response.text();
                 const lines = rawText.replace(/\r/g, '').split('\n');
@@ -101,15 +99,11 @@
                 const keys = ["Name", "Folder", "Category", "Backup", "Size", "Original File", "Current Storage", "Backup Site"];
 
                 for (let i = 1; i < lines.length; i++) {
-                    const currentLine = lines[i].trim();
-                    if (!currentLine) continue;
-
+                    if (!lines[i].trim()) continue;
                     const columns = lines[i].split('\t');
                     const item = {};
-
                     keys.forEach((key, index) => {
                         let val = columns[index] ? columns[index].trim() : "";
-                        
                         if (val.startsWith('="') && val.endsWith('"')) {
                             val = val.substring(2, val.length - 1);
                         } else if (val.startsWith('"') && val.endsWith('"')) {
@@ -122,18 +116,10 @@
                 renderTable(dvdDatabase);
             } catch (error) {
                 console.error(error);
-                movieCount.textContent = "載入失敗";
-                movieCount.className = "bg-red-500/10 text-red-400 px-3 py-1 rounded-full text-xs font-bold border border-red-500/20";
-                
-                if (window.location.protocol === 'file:') {
-                    alert("【瀏覽器安全阻擋】\n請在 VS Code 裡點擊右下角的「Go Live」按鈕啟動伺服器環境喔！");
-                } else {
-                    alert("錯誤：未能在相同路徑下找到 DVD ISO list.txt 檔案，請檢查大小寫及空白是否正確。");
-                }
+                movieCount.textContent = "載入失敗 (請確認 DVD ISO list.txt 存在)";
             }
         }
 
-        // 渲染資料到畫面上
         function renderTable(data) {
             tableBody.innerHTML = '';
             movieCount.textContent = `共 ${data.length} 筆資料`;
@@ -148,26 +134,23 @@
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-gray-700/40 transition duration-150 border-b border-gray-800/40';
 
-                // Backup 顏色標籤
-                const isBackupNo = item.Backup.toLowerCase() === 'no' || item.Backup === '無';
+                const isBackupNo = (item.Backup || '').toLowerCase() === 'no' || item.Backup === '無';
                 const backupBadge = isBackupNo
                     ? `<span class="bg-red-500/10 text-red-400 px-2 py-0.5 rounded border border-red-500/20 font-bold text-[10px]">NO</span>`
                     : `<span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20 font-bold text-[10px]">YES</span>`;
 
-                // Original File 顏色標籤
-                const isOrgFileYes = item["Original File"].toLowerCase() === 'yes' || item["Original File"] === '有';
+                const isOrgFileYes = (item["Original File"] || '').toLowerCase() === 'yes' || item["Original File"] === '有';
                 const orgFileBadge = isOrgFileYes
                     ? `<span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">YES</span>`
                     : `<span class="text-gray-500">${item["Original File"]}</span>`;
 
-                // Size 單位自動換算
                 let formattedSize = item.Size;
-                const pureBytes = parseInt(formattedSize.replace(/,/g, ''));
+                const pureBytes = parseInt((formattedSize || '').replace(/,/g, ''));
                 if (!isNaN(pureBytes)) {
                     formattedSize = (pureBytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
                 }
 
-                                tr.innerHTML = `
+                tr.innerHTML = `
                     <td class="py-3 px-4 font-semibold text-gray-100 max-w-xs truncate" title="${item.Name}">${item.Name}</td>
                     <td class="py-3 px-4 font-mono text-gray-400">${item.Folder}</td>
                     <td class="py-3 px-4"><span class="bg-gray-900/60 px-2 py-0.5 rounded text-gray-400 border border-gray-700">${item.Category}</span></td>
@@ -181,36 +164,27 @@
             });
         }
 
-        // 搜尋篩選
         function getFilteredData() {
             const query = searchInput.value.toLowerCase().trim();
             if (!query) return dvdDatabase;
 
-            return dvdDatabase.filter(item => {
-                return (
-                    item.Name.toLowerCase().includes(query) ||
-                    item.Folder.toLowerCase().includes(query) ||
-                    item.Category.toLowerCase().includes(query) ||
-                    item.Backup.toLowerCase().includes(query) ||
-                    item.Size.toLowerCase().includes(query) ||
-                    item["Original File"].toLowerCase().includes(query) ||
-                    item["Original Storage"].toLowerCase().includes(query) ||
-                    item["Backup Site"].toLowerCase().includes(query)
-                );
-            });
+            return dvdDatabase.filter(item =>
+                (item.Name || '').toLowerCase().includes(query) ||
+                (item.Folder || '').toLowerCase().includes(query) ||
+                (item.Category || '').toLowerCase().includes(query) ||
+                (item.Backup || '').toLowerCase().includes(query) ||
+                (item.Size || '').toLowerCase().includes(query) ||
+                (item["Original File"] || '').toLowerCase().includes(query) ||
+                (item["Current Storage"] || '').toLowerCase().includes(query) ||
+                (item["Backup Site"] || '').toLowerCase().includes(query)
+            );
         }
 
         function doSearch() {
-            if (searchInput.value.trim()) {
-                clearBtn.classList.remove('hidden');
-            } else {
-                clearBtn.classList.add('hidden');
-            }
+            clearBtn.classList.toggle('hidden', !searchInput.value.trim());
             renderTable(getFilteredData());
         }
 
-        // 點擊表頭排序
-                // 🛠️ 請找到 function sortTable(key) 並將這整段替換進去
         function sortTable(key) {
             if (currentSortKey === key) {
                 isAscending = !isAscending;
@@ -220,7 +194,6 @@
             }
 
             const currentData = getFilteredData();
-
             currentData.sort((a, b) => {
                 let valA = a[key] || '';
                 let valB = b[key] || '';
@@ -230,12 +203,10 @@
                     const numB = parseInt(valB.replace(/,/g, '')) || 0;
                     return isAscending ? numA - numB : numB - numA;
                 }
-
                 return isAscending
                     ? valA.localeCompare(valB, 'zh-Hans-TW', { sensitivity: 'accent' })
                     : valB.localeCompare(valA, 'zh-Hans-TW', { sensitivity: 'accent' });
             });
-
             renderTable(currentData);
         }
 
@@ -247,7 +218,6 @@
         });
 
         window.addEventListener('DOMContentLoaded', fetchAndParseData);
-
     </script>
 </body>
 </html>
