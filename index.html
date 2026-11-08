@@ -99,13 +99,13 @@
     try {
         movieCount.textContent = "正在連線讀取 Google 試算表...";
         
-        // 已填入你目前提供的試算表 ID 與分頁 GID（若已轉存為 Google 試算表，請替換為新網址的 ID 與 GID）
+        // 已為你填入最新轉存的 Google 試算表 ID 與分頁 GID
         const sheetId = '1hvu5MGeDlieav33qFlDuLdDI0U0LQ4CxfxtZ3wc6b5U';
         const gid = '1459482754';
         const url = `https://google.com{sheetId}/export?format=tsv&gid=${gid}`;
         
         const response = await fetch(url);
-        if (!response.ok) throw new Error('讀取失敗，請確認已轉存為 Google 試算表並開啟公開檢視');
+        if (!response.ok) throw new Error('讀取失敗，請確認試算表權限已設為「知道連結的任何人均可檢視」');
         
         const rawText = await response.text();
         const lines = rawText.replace(/\r/g, '').split('\n');
