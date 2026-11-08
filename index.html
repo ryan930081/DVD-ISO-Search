@@ -8,7 +8,13 @@
     <script src="https://tailwindcss.com"></script>
 <style>
     table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-    th, td { border: 1px solid #4b5563 !important; padding: 10px 12px; }
+    th, td { 
+        border: 1px solid #4b5563 !important; 
+        padding: 10px 12px; 
+        white-space: normal !important; 
+        word-break: break-word; 
+        overflow-wrap: break-word;
+    }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
@@ -149,14 +155,14 @@
                 let formattedSize = item.Size || '-';
 
                 tr.innerHTML = `
-    <td class="py-3 px-4 font-semibold text-gray-100 truncate border border-gray-700" title="${item.Name}">${item.Name}</td>
-    <td class="py-3 px-4 font-mono text-gray-400 truncate border border-gray-700" title="${item.Folder}">${item.Folder}</td>
-    <td class="py-3 px-4 truncate border border-gray-700"><span class="bg-gray-900/60 px-2 py-0.5 rounded text-gray-400 border border-gray-700">${item.Category}</span></td>
+    <td class="py-3 px-4 font-semibold text-gray-100 break-words border border-gray-700">${item.Name}</td>
+    <td class="py-3 px-4 font-mono text-gray-400 break-words border border-gray-700">${item.Folder}</td>
+    <td class="py-3 px-4 break-words border border-gray-700"><span class="bg-gray-900/60 px-2 py-0.5 rounded text-gray-400 border border-gray-700">${item.Category}</span></td>
     <td class="py-3 px-4 text-center border border-gray-700">${backupBadge}</td>
-    <td class="py-3 px-4 font-mono text-gray-400 truncate border border-gray-700" title="${formattedSize}">${formattedSize}</td>
+    <td class="py-3 px-4 font-mono text-gray-400 break-all border border-gray-700">${formattedSize}</td>
     <td class="py-3 px-4 text-center font-mono border border-gray-700">${orgFileBadge}</td>
-    <td class="py-3 px-4 text-emerald-400/90 font-medium truncate border border-gray-700" title="${item["Current Storage"]}">${item["Current Storage"]}</td>
-    <td class="py-3 px-4 text-gray-400 truncate border border-gray-700" title="${item["Backup Site"]}">${item["Backup Site"]}</td>
+    <td class="py-3 px-4 text-emerald-400/90 font-medium break-words border border-gray-700">${item["Current Storage"]}</td>
+    <td class="py-3 px-4 text-gray-400 break-words border border-gray-700">${item["Backup Site"]}</td>
 `;
 
                 tableBody.appendChild(tr);
