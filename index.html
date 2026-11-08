@@ -113,7 +113,7 @@
                     });
                     dvdDatabase.push(item);
                 }
-                renderTable(dvdDatabase);
+                movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料，請輸入關鍵字搜尋`;
             } catch (error) {
                 console.error(error);
                 movieCount.textContent = "載入失敗 (請確認 DVD ISO list.txt 存在)";
