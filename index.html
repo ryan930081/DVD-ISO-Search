@@ -6,11 +6,13 @@
     <title>DVD ISO Search</title>
     <!-- 引入 Tailwind CSS 美化樣式 -->
     <script src="https://tailwindcss.com"></script>
-    <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
-    </style>
+<style>
+    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    th, td { border: 1px solid #4b5563 !important; padding: 10px 12px; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+</style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen font-sans flex flex-col">
 
@@ -76,7 +78,7 @@
 
     <!-- 🟢 所有的 JavaScript 邏輯都已經完美收納在下方標籤中，不會再外流到畫面上了 🟢 -->
         <script>
-        let dvdDatabase = [];
+        let dvdDatabase = new Array();
         let currentSortKey = '';
         let isAscending = true;
 
@@ -163,7 +165,7 @@
 
         function getFilteredData() {
     const query = searchInput.value.toLowerCase().trim();
-    if (!query) return [];
+    if (!query) return new Array();
 
     return dvdDatabase.filter(item =>
         (item.Name || '').toLowerCase().includes(query) ||
