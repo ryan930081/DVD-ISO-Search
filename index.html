@@ -95,44 +95,60 @@
         const movieCount = document.getElementById('movieCount');
         const noResult = document.getElementById('noResult');
 
-        async function fetchAndParseData() {
-    try {
-        movieCount.textContent = "正在連線讀取 Google 試算表...";
-        
-        const sheetId = '1hvu5MGeDlieav33qFlDuLdDI0U0LQ4CxfxtZ3wc6b5U';
-        const gid = '1459482754';
-        const url = `https://google.com{sheetId}/export?format=tsv&gid=${gid}`;
-        
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('讀取失敗，請確認試算表權限已設為「知道連結的任何人均可檢視」');
-        
-        const rawText = await response.text();
-        const lines = rawText.replace(/\r/g, '').split('\n');
-        if (lines.length <= 1) return;
+        function fetchAndParseData() {
+    movieCount.textContent = "正在連線讀取 Google 試算表...";
 
-        const keys = ["Name", "Folder", "Category", "Backup", "Size", "Original File", "Current Storage", "Backup Site"];
-        dvdDatabase = new Array();
+    const sheetId = '1hvu5MGeDlieav33qFlDuLdDI0U0LQ4CxfxtZ3wc6b5U';
+    const gid = '1459482754';
+    const callbackName = 'googleSheetCallback';
 
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            const columns = lines[i].split('\t');
-            const item = {};
-            keys.forEach((key, index) => {
-                let val = columns[index] ? columns[index].trim() : "";
-                if (val.startsWith('="') && val.endsWith('"')) val = val.substring(2, val.length - 1);
-                else if (val.startsWith('"') && val.endsWith('"')) val = val.substring(1, val.length - 1);
-                item[key] = val || "-";
-            });
-            dvdDatabase.push(item);
+    // 建立全域接收函式，完美避開瀏覽器 CORS 阻擋
+    window[callbackName] = function(response) {
+        try {
+            if (!response || response.status === 'error') {
+                throw new Error('試算表讀取被拒，請確認已開啟「知道連結的任何人均可檢視」');
+            }
+
+            const rows = response.table.rows;
+            const keys = ["Name", "Folder", "Category", "Backup", "Size", "Original File", "Current Storage", "Backup Site"];
+            dvdDatabase = new Array();
+
+            for (let i = 0; i < rows.length; i++) {
+                const rowCells = rows[i].c;
+                if (!rowCells) continue;
+
+                // 若第一列不小心被當成資料讀進來，自動跳過標題列
+                const firstVal = rowCells[0] ? (rowCells[0].f || rowCells[0].v || '') : '';
+                if (i === 0 && firstVal.toString().trim() === 'Name') continue;
+
+                const item = {};
+                keys.forEach((key, index) => {
+                    const cell = rowCells[index];
+                    // 優先取用試算表顯示格式 (f，可保留千分位逗號)，若無則取原始值 (v)
+                    let val = cell ? (cell.f !== undefined && cell.f !== null ? cell.f : cell.v) : '';
+                    item[key] = (val !== null && val !== undefined && val.toString().trim() !== '') ? val.toString().trim() : '-';
+                });
+
+                if (item.Name !== '-') {
+                    dvdDatabase.push(item);
+                }
+            }
+
+            movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料，請輸入關鍵字搜尋`;
+        } catch (err) {
+            console.error(err);
+            movieCount.textContent = "載入失敗：" + err.message;
         }
-        
-        movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料，請輸入關鍵字搜尋`;
-    } catch (error) {
-        console.error(error);
-        movieCount.textContent = "載入失敗：" + error.message;
-    }
-}
+    };
 
+    // 動態插入 Google Visualization API 腳本標籤
+    const script = document.createElement('script');
+    script.src = `https://google.com{sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&gid=${gid}`;
+    script.onerror = function() {
+        movieCount.textContent = "載入失敗：無法連線至 Google 試算表，請檢查網路或公開權限";
+    };
+    document.body.appendChild(script);
+}
 
         function renderTable(data) {
             tableBody.innerHTML = '';
