@@ -143,7 +143,9 @@
 
     // 動態插入 Google Visualization API 腳本標籤
     const script = document.createElement('script');
-    script.src = `https://google.com{sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&gid=${gid}`;
+    const baseDomain = 'https://google.com';
+    script.src = baseDomain + sheetId + '/gviz/tq?tqx=responseHandler:' + callbackName + '&gid=' + gid;
+
     script.onerror = function() {
         movieCount.textContent = "載入失敗：無法連線至 Google 試算表，請檢查網路或公開權限";
     };
