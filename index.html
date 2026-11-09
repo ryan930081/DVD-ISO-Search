@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DVD ISO Search</title>
-    <script src="https://tailwindcss.com"></script>
+    <link href="https://jsdelivr.net" rel="stylesheet">
     <style>
         table { border-collapse: collapse; width: 100%; table-layout: fixed; }
         thead tr, thead th { background-color: #a7f3d0 !important; color: #064e3b !important; }
@@ -162,10 +162,7 @@
             renderTable(list);
         }
 
-        el('searchBtn').onclick = doSearch;
-        el('searchInput').oninput = doSearch;
-        el('clearBtn').onclick = () => { el('searchInput').value = ''; doSearch(); };
-        el('showAllBtn').onclick = () => {
+            el('showAllBtn').onclick = () => {
             el('searchInput').value = '';
             el('clearBtn').classList.add('hidden');
             isShowingAll = true;
@@ -175,3 +172,4 @@
     </script>
 </body>
 </html>
+
