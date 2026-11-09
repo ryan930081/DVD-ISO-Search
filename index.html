@@ -85,185 +85,215 @@
 
     <!-- 🟢 所有的 JavaScript 邏輯都已經完美收納在下方標籤中，不會再外流到畫面上了 🟢 -->
         <script>
-        let dvdDatabase = new Array();
-        let currentSortKey = '';
-        let isAscending = true;
+    let dvdDatabase = new Array();
+    let tableHeaders = new Array(); // 動態儲存從試算表抓到的所有欄位名稱
+    let currentSortKey = '';
+    let isAscending = true;
 
-        const tableBody = document.getElementById('movieTableBody');
-        const searchInput = document.getElementById('searchInput');
-        const searchBtn = document.getElementById('searchBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const movieCount = document.getElementById('movieCount');
-        const noResult = document.getElementById('noResult');
+    const tableHeadRow = document.getElementById('tableHeadRow');
+    const tableBody = document.getElementById('movieTableBody');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const movieCount = document.getElementById('movieCount');
+    const noResult = document.getElementById('noResult');
 
-        function fetchAndParseData() {
-    movieCount.textContent = "正在連線讀取 Google 試算表...";
+    function fetchAndParseData() {
+        movieCount.textContent = "正在連線讀取 Google 試算表...";
 
-    // 拆解網址以確保 100% 完整，不會被縮寫或阻擋
-    const d1 = 'https://' + 'docs' + '.google.com';
-    const d2 = '/spreadsheets/d/';
-    const sheetId = '1hvu5MGeDlieav33qFlDuLdDI0U0LQ4CxfxtZ3wc6b5U';
-    const gid = '1459482754';
-    const callbackName = 'loadSheetDataCallback';
+        const d1 = 'https://' + 'docs' + '.google.com';
+        const d2 = '/spreadsheets/d/';
+        const sheetId = '1hvu5MGeDlieav33qFlDuLdDI0U0LQ4CxfxtZ3wc6b5U';
+        const gid = '1459482754';
+        const callbackName = 'loadDynamicSheetCallback';
 
-    // 設定接收資料的函式
-    window[callbackName] = function(response) {
-        try {
-            if (!response || response.status === 'error') {
-                throw new Error('試算表權限未開啟，請確認已設為「知道連結的任何人均可檢視」');
-            }
+        window[callbackName] = function(response) {
+            try {
+                if (!response || response.status === 'error') {
+                    throw new Error('試算表讀取失敗，請確認已開啟「知道連結的任何人均可檢視」');
+                }
 
-            const rows = response.table.rows;
-            const keys = ["Name", "Folder", "Category", "Backup", "Size", "Original File", "Current Storage", "Backup Site"];
-            dvdDatabase = new Array();
+                const cols = response.table.cols;
+                const rows = response.table.rows;
+                tableHeaders = new Array();
+                let headerRowIndex = -1;
 
-            for (let i = 0; i < rows.length; i++) {
-                const rowCells = rows[i].c;
-                if (!rowCells) continue;
-
-                // 自動跳過標題列
-                const firstCell = rowCells;
-                const firstVal = firstCell ? (firstCell.f || firstCell.v || '') : '';
-                if (i === 0 && firstVal.toString().trim() === 'Name') continue;
-
-                const item = {};
-                keys.forEach((key, index) => {
-                    const cell = rowCells[index];
-                    // 優先取用畫面顯示的格式 (f，保留千分位逗號)，若無則取原始值 (v)
-                    let val = cell ? (cell.f !== undefined && cell.f !== null ? cell.f : cell.v) : '';
-                    item[key] = (val !== null && val !== undefined && val.toString().trim() !== '') ? val.toString().trim() : '-';
+                // 1. 優先從 Google API 的欄位標籤讀取標題
+                cols.forEach(col => {
+                    if (col && col.label && col.label.trim() !== '') {
+                        tableHeaders.push(col.label.trim());
+                    }
                 });
 
-                if (item.Name !== '-') {
-                    dvdDatabase.push(item);
+                // 2. 若標題位於資料列的第一列，則自動擷取該列作為動態表頭
+                if (tableHeaders.length === 0 && rows.length > 0 && rows.c) {
+                    headerRowIndex = 0;
+                    rows.c.forEach(cell => {
+                        let val = cell ? (cell.f || cell.v || '') : '';
+                        if (val.toString().trim() !== '') {
+                            tableHeaders.push(val.toString().trim());
+                        }
+                    });
                 }
-            }
 
-            movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料，請輸入關鍵字搜尋`;
-        } catch (err) {
-            console.error(err);
-            movieCount.textContent = "載入失敗：" + err.message;
-        }
-    };
+                // 動態生成淺綠色表頭
+                renderTableHeaders();
 
-    // 透過 script 標籤直接讀取，100% 繞過 Failed to fetch 限制
-    const script = document.createElement('script');
-    script.src = d1 + d2 + sheetId + '/gviz/tq?tqx=responseHandler:' + callbackName + '&gid=' + gid;
-    script.onerror = function() {
-        movieCount.textContent = "載入失敗：無法連線至 Google，請確認試算表已設為「知道連結的任何人均可檢視」";
-    };
-    document.body.appendChild(script);
-}
+                // 3. 依據動態欄位數量逐列解析資料
+                dvdDatabase = new Array();
+                for (let i = 0; i < rows.length; i++) {
+                    if (i === headerRowIndex) continue; // 跳過已當作標題的那一列
+                    const rowCells = rows[i].c;
+                    if (!rowCells) continue;
 
+                    const item = {};
+                    let hasData = false;
 
-        function renderTable(data) {
-            tableBody.innerHTML = '';
-            movieCount.textContent = `共 ${data.length} 筆資料`;
+                    tableHeaders.forEach((headerName, index) => {
+                        const cell = rowCells[index];
+                        let val = cell ? (cell.f !== undefined && cell.f !== null ? cell.f : cell.v) : '';
+                        let cleanVal = (val !== null && val !== undefined && val.toString().trim() !== '') ? val.toString().trim() : '-';
+                        item[headerName] = cleanVal;
+                        if (cleanVal !== '-') hasData = true;
+                    });
 
-            if (data.length === 0) {
-                noResult.classList.remove('hidden');
-                return;
-            }
-            noResult.classList.add('hidden');
-
-            data.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-700/40 transition duration-150 border-b border-gray-800/40';
-
-                                const backupStr = (item.Backup || '').toString().trim().toLowerCase();
-                let backupBadge = `<span class="text-gray-400 font-mono">${item.Backup || '-'}</span>`;
-                
-                if (backupStr === 'yes' || backupStr === 'y' || backupStr === '有' || backupStr === 'true') {
-                    backupBadge = `<span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20 font-bold text-[10px]">YES</span>`;
-                } else if (backupStr === 'no' || backupStr === 'n' || backupStr === '無' || backupStr === 'false') {
-                    backupBadge = `<span class="bg-red-500/10 text-red-400 px-2 py-0.5 rounded border border-red-500/20 font-bold text-[10px]">NO</span>`;
+                    if (hasData) {
+                        dvdDatabase.push(item);
+                    }
                 }
-                const isOrgFileYes = (item["Original File"] || '').toLowerCase() === 'yes' || item["Original File"] === '有';
-                const orgFileBadge = isOrgFileYes
-                    ? `<span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">YES</span>`
-                    : `<span class="text-gray-500">${item["Original File"]}</span>`;
 
-                let formattedSize = item.Size || '-';
+                movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料（共 ${tableHeaders.length} 個欄位），請輸入關鍵字搜尋`;
+            } catch (err) {
+                console.error(err);
+                movieCount.textContent = "載入失敗：" + err.message;
+            }
+        };
 
-                tr.innerHTML = `
-    <td class="py-3 px-4 font-semibold text-gray-400 break-words border border-gray-700">${item.Name}</td>
-    <td class="py-3 px-4 font-mono text-gray-400 break-words border border-gray-700">${item.Folder}</td>
-    <td class="py-3 px-4 break-words border border-gray-700"><span class="bg-gray-900/60 px-2 py-0.5 rounded text-gray-400 border border-gray-700">${item.Category}</span></td>
-    <td class="py-3 px-4 text-center border border-gray-700">${backupBadge}</td>
-    <td class="py-3 px-4 font-mono text-gray-400 break-all border border-gray-700">${formattedSize}</td>
-    <td class="py-3 px-4 text-center font-mono border border-gray-700">${orgFileBadge}</td>
-    <td class="py-3 px-4 text-emerald-400/90 font-medium break-words border border-gray-700">${item["Current Storage"]}</td>
-    <td class="py-3 px-4 text-gray-400 break-words border border-gray-700">${item["Backup Site"]}</td>
-`;
-
-                tableBody.appendChild(tr);
-            });
-        }
-
-        function getFilteredData() {
-    const query = searchInput.value.toLowerCase().trim();
-    if (!query) return new Array();
-
-    return dvdDatabase.filter(item =>
-        (item.Name || '').toLowerCase().includes(query) ||
-        (item.Folder || '').toLowerCase().includes(query) ||
-        (item.Category || '').toLowerCase().includes(query) ||
-        (item.Backup || '').toLowerCase().includes(query) ||
-        (item.Size || '').toLowerCase().includes(query) ||
-        (item["Original File"] || '').toLowerCase().includes(query) ||
-        (item["Current Storage"] || '').toLowerCase().includes(query) ||
-        (item["Backup Site"] || '').toLowerCase().includes(query)
-    );
-}
-
-function doSearch() {
-    const query = searchInput.value.trim();
-    clearBtn.classList.toggle('hidden', !query);
-    
-    if (!query) {
-        tableBody.innerHTML = '';
-        noResult.classList.add('hidden');
-        movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料，請輸入關鍵字搜尋`;
-        return;
+        const script = document.createElement('script');
+        script.src = d1 + d2 + sheetId + '/gviz/tq?tqx=responseHandler:' + callbackName + '&gid=' + gid;
+        script.onerror = function() {
+            movieCount.textContent = "載入失敗：無法連線至 Google 試算表";
+        };
+        document.body.appendChild(script);
     }
-    
-    renderTable(getFilteredData());
-}
 
-        function sortTable(key) {
-            if (!searchInput.value.trim()) return;
-            if (currentSortKey === key) {
-                isAscending = !isAscending;
-            } else {
-                currentSortKey = key;
-                isAscending = true;
-            }
+    // 動態繪製表頭（自動平均分配等寬）
+    function renderTableHeaders() {
+        tableHeadRow.innerHTML = '';
+        tableHeaders.forEach(header => {
+            const th = document.createElement('th');
+            th.className = 'py-3.5 px-4 cursor-pointer transition border border-gray-400 break-words';
+            th.textContent = header + ' ↕️';
+            th.onclick = () => sortTable(header);
+            tableHeadRow.appendChild(th);
+        });
+    }
 
-            const currentData = getFilteredData();
-            currentData.sort((a, b) => {
-                let valA = a[key] || '';
-                let valB = b[key] || '';
+    // 動態繪製資料列
+    function renderTable(data) {
+        tableBody.innerHTML = '';
+        movieCount.textContent = `共找到 ${data.length} 筆資料`;
 
-                if (key === 'Size') {
-                    const numA = parseInt(valA.replace(/,/g, '')) || 0;
-                    const numB = parseInt(valB.replace(/,/g, '')) || 0;
-                    return isAscending ? numA - numB : numB - numA;
+        if (data.length === 0) {
+            noResult.classList.remove('hidden');
+            return;
+        }
+        noResult.classList.add('hidden');
+
+        data.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-700/40 transition duration-150 border-b border-gray-800/40';
+
+            tableHeaders.forEach((header, index) => {
+                const td = document.createElement('td');
+                const val = item[header] || '-';
+                const lowerVal = val.toLowerCase();
+
+                // 針對 YES / NO 狀態欄位自動套用紅綠標籤
+                if (lowerVal === 'yes' || lowerVal === 'y' || lowerVal === '有' || lowerVal === 'true') {
+                    td.className = 'py-3 px-4 text-center font-mono border border-gray-700';
+                    td.innerHTML = `<span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20 font-bold text-[10px]">YES</span>`;
+                } else if (lowerVal === 'no' || lowerVal === 'n' || lowerVal === '無' || lowerVal === 'false') {
+                    td.className = 'py-3 px-4 text-center font-mono border border-gray-700';
+                    td.innerHTML = `<span class="bg-red-500/10 text-red-400 px-2 py-0.5 rounded border border-red-500/20 font-bold text-[10px]">NO</span>`;
+                } else {
+                    // 第一欄（片名）加粗顯示，其餘欄位保持標準樣式
+                    td.className = index === 0 
+                        ? 'py-3 px-4 font-semibold text-gray-200 break-words border border-gray-700'
+                        : 'py-3 px-4 text-gray-300 break-words border border-gray-700';
+                    td.textContent = val;
                 }
-                return isAscending
-                    ? valA.localeCompare(valB, 'zh-Hans-TW', { sensitivity: 'accent' })
-                    : valB.localeCompare(valA, 'zh-Hans-TW', { sensitivity: 'accent' });
+                tr.appendChild(td);
             });
-            renderTable(currentData);
+
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // 全欄位動態模糊搜尋（不論新增幾個欄位都會自動納入搜尋範圍）
+    function getFilteredData() {
+        const query = searchInput.value.toLowerCase().trim();
+        if (!query) return new Array();
+
+        return dvdDatabase.filter(item =>
+            tableHeaders.some(header => (item[header] || '').toLowerCase().includes(query))
+        );
+    }
+
+    function doSearch() {
+        const query = searchInput.value.trim();
+        clearBtn.classList.toggle('hidden', !query);
+
+        if (!query) {
+            tableBody.innerHTML = '';
+            noResult.classList.add('hidden');
+            movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料（共 ${tableHeaders.length} 個欄位），請輸入關鍵字搜尋`;
+            return;
         }
 
-        searchBtn.addEventListener('click', doSearch);
-        searchInput.addEventListener('input', doSearch);
-        clearBtn.addEventListener('click', () => {
-            searchInput.value = '';
-            doSearch();
+        renderTable(getFilteredData());
+    }
+
+    // 動態欄位排序（自動判斷純數字大小或文字筆畫）
+    function sortTable(key) {
+        if (!searchInput.value.trim()) return;
+
+        if (currentSortKey === key) {
+            isAscending = !isAscending;
+        } else {
+            currentSortKey = key;
+            isAscending = true;
+        }
+
+        const currentData = getFilteredData();
+        currentData.sort((a, b) => {
+            const valA = a[key] || '';
+            const valB = b[key] || '';
+
+            // 若該欄位為純數字（含千分位逗號，如 Size），則依數值大小排序
+            const cleanNumA = valA.replace(/,/g, '');
+            const cleanNumB = valB.replace(/,/g, '');
+            if (cleanNumA !== '' && cleanNumB !== '' && !isNaN(cleanNumA) && !isNaN(cleanNumB)) {
+                return isAscending ? Number(cleanNumA) - Number(cleanNumB) : Number(cleanNumB) - Number(cleanNumA);
+            }
+
+            return isAscending
+                ? valA.localeCompare(valB, 'zh-Hans-TW', { sensitivity: 'accent' })
+                : valB.localeCompare(valA, 'zh-Hans-TW', { sensitivity: 'accent' });
         });
 
-        window.addEventListener('DOMContentLoaded', fetchAndParseData);
-    </script>
+        renderTable(currentData);
+    }
+
+    searchBtn.addEventListener('click', doSearch);
+    searchInput.addEventListener('input', doSearch);
+    clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        doSearch();
+    });
+
+    window.addEventListener('DOMContentLoaded', fetchAndParseData);
+</script>
+
 </body>
 </html>
