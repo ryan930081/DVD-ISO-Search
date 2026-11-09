@@ -50,7 +50,8 @@
 
         function fetchAndParseData() {
             el('movieCount').textContent = "正在連線讀取 Google 試算表...";
-            const url = 'https://' + 'docs' + '://';
+            const base = 'https://' + '://google.com' + '/spreadsheets/d/';
+            const url = base + '1hvu5MGeDlieav33qFlDuLdDI0U0LQ4CxfxtZ3wc6b5U/gviz/tq?tqx=responseHandler:onSheetLoaded&gid=1459482754';
 
             window.onSheetLoaded = function(res) {
                 try {
