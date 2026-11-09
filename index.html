@@ -8,6 +8,13 @@
     <script src="https://tailwindcss.com"></script>
 <style>
     table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    thead tr, thead th {
+        background-color: #2563eb !important; /* 強制顯示寶藍色 */
+        color: #ffffff !important;            /* 強制顯示純白字 */
+    }
+    thead th:hover {
+        background-color: #1d4ed8 !important; /* 滑鼠移過去變深藍色 */
+    }
     th, td { 
         border: 1px solid #4b5563 !important; 
         padding: 10px 12px; 
@@ -19,6 +26,7 @@
     .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
 </style>
+    
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen font-sans flex flex-col">
 
