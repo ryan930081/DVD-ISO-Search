@@ -61,9 +61,9 @@
         </div>
     </main>
 
-    <script>
-        var dvdDatabase = [];
-        var tableHeaders = [];
+        <script>
+        var dvdDatabase = new Array();
+        var tableHeaders = new Array();
         var currentSortKey = '';
         var isAscending = true;
         var isShowingAll = false;
@@ -81,21 +81,24 @@
                     if (!res || res.status === 'error') throw new Error('請確認試算表共用權限已設為「知道連結的任何人」');
                     var cols = res.table.cols;
                     var rows = res.table.rows;
-                    tableHeaders = [];
+                    tableHeaders = new Array();
 
                     for (var cIdx = 0; cIdx < cols.length; cIdx++) {
-                        if (cols[cIdx] && cols[cIdx].label && cols[cIdx].label.trim() !== '') {
-                            tableHeaders.push(cols[cIdx].label.trim());
+                        if (cols.at(cIdx) && cols.at(cIdx).label && cols.at(cIdx).label.trim() !== '') {
+                            tableHeaders.push(cols.at(cIdx).label.trim());
                         }
                     }
 
                     var startRow = 0;
-                    if (tableHeaders.length === 0 && rows.length > 0 && rows[0].c) {
-                        startRow = 1;
-                        for (var fIdx = 0; fIdx < rows[0].c.length; fIdx++) {
-                            var fCell = rows[0].c[fIdx];
-                            var fVal = fCell ? (fCell.f || fCell.v || '') : '';
-                            if (fVal.toString().trim() !== '') tableHeaders.push(fVal.toString().trim());
+                    if (tableHeaders.length === 0 && rows.length > 0) {
+                        var firstRow = rows.at(0);
+                        if (firstRow && firstRow.c) {
+                            startRow = 1;
+                            for (var fIdx = 0; fIdx < firstRow.c.length; fIdx++) {
+                                var fCell = firstRow.c.at(fIdx);
+                                var fVal = fCell ? (fCell.f || fCell.v || '') : '';
+                                if (fVal.toString().trim() !== '') tableHeaders.push(fVal.toString().trim());
+                            }
                         }
                     }
 
@@ -106,18 +109,18 @@
                             th.textContent = headerName + ' ↕️';
                             th.onclick = function() { sortTable(headerName); };
                             el('tableHeadRow').appendChild(th);
-                        })(tableHeaders[hIdx]);
+                        })(tableHeaders.at(hIdx));
                     }
 
-                    dvdDatabase = [];
+                    dvdDatabase = new Array();
                     for (var i = startRow; i < rows.length; i++) {
-                        var r = rows[i];
+                        var r = rows.at(i);
                         if (!r || !r.c) continue;
                         var item = {};
                         var hasVal = false;
                         for (var j = 0; j < tableHeaders.length; j++) {
-                            var hName = tableHeaders[j];
-                            var cell = r.c[j];
+                            var hName = tableHeaders.at(j);
+                            var cell = r.c.at(j);
                             var val = cell ? (cell.f !== undefined && cell.f !== null ? cell.f : cell.v) : '';
                             var str = (val !== null && val !== undefined && val.toString().trim() !== '') ? val.toString().trim() : '-';
                             item[hName] = str;
@@ -133,7 +136,7 @@
 
             var s = document.createElement('script');
             s.src = h + d + p;
-            s.onerror = function() { el('movieCount').textContent = '連線失敗：請確認 Google 試算表共用權限已設為「知道連結的任何人」'; };
+            s.onerror = function() { el('movieCount').textContent = '連線失敗：請確認網路或試算表權限'; };
             document.body.appendChild(s);
         }
 
@@ -143,10 +146,10 @@
             el('noResult').style.display = data.length === 0 ? 'block' : 'none';
 
             for (var i = 0; i < data.length; i++) {
-                var item = data[i];
+                var item = data.at(i);
                 var tr = document.createElement('tr');
                 for (var j = 0; j < tableHeaders.length; j++) {
-                    var hName = tableHeaders[j];
+                    var hName = tableHeaders.at(j);
                     var td = document.createElement('td');
                     var val = item[hName] || '-';
                     var low = val.toLowerCase();
@@ -158,7 +161,7 @@
                         td.className = 'center';
                         td.innerHTML = '<span class="badge-no">NO</span>';
                     } else {
-                        if (j === 0) td.style.fontWeight = 'bold';
+                        if (hName === 'Name') td.style.fontWeight = 'bold';
                         td.textContent = val;
                     }
                     tr.appendChild(td);
@@ -169,10 +172,10 @@
 
         function getFilteredData() {
             var q = el('searchInput').value.toLowerCase().trim();
-            if (!q) return [];
+            if (!q) return new Array();
             return dvdDatabase.filter(function(item) {
                 for (var j = 0; j < tableHeaders.length; j++) {
-                    var hName = tableHeaders[j];
+                    var hName = tableHeaders.at(j);
                     if ((item[hName] || '').toLowerCase().indexOf(q) !== -1) return true;
                 }
                 return false;
