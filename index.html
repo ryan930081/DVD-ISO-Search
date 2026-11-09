@@ -4,145 +4,189 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DVD ISO Search</title>
-    <link href="https://jsdelivr.net" rel="stylesheet">
     <style>
-        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-        thead tr, thead th { background-color: #a7f3d0 !important; color: #064e3b !important; }
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: #111827; color: #f3f4f6; margin: 0; padding: 0; }
+        header { background-color: #1f2937; border-bottom: 1px solid #374151; padding: 16px 24px; position: sticky; top: 0; z-index: 50; }
+        .header-inner { max-width: 1280px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
+        h1 { color: #34d399; font-size: 20px; margin: 0; }
+        .search-box { display: flex; flex: 1; max-width: 600px; }
+        input { flex: 1; padding: 10px 14px; background-color: #374151; border: 1px solid #4b5563; border-radius: 6px 0 0 6px; color: #fff; font-size: 14px; outline: none; }
+        input:focus { border-color: #10b981; }
+        button { padding: 10px 16px; border: none; font-weight: bold; cursor: pointer; font-size: 14px; }
+        #clearBtn { background-color: #4b5563; color: #fff; display: none; }
+        #searchBtn { background-color: #10b981; color: #111827; }
+        #showAllBtn { background-color: #3b82f6; color: #fff; border-radius: 0 6px 6px 0; }
+        main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+        .status-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+        .status-title { color: #9ca3af; font-size: 14px; margin: 0; }
+        #movieCount { background-color: rgba(16, 185, 129, 0.15); color: #34d399; padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: bold; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .table-wrap { background-color: #1f2937; border-radius: 8px; overflow-x: auto; border: 1px solid #374151; }
+        table { border-collapse: collapse; width: 100%; min-width: 1000px; table-layout: fixed; font-size: 13px; }
+        thead tr, thead th { background-color: #a7f3d0 !important; color: #064e3b !important; font-weight: bold; text-align: left; }
+        thead th { cursor: pointer; user-select: none; }
         thead th:hover { background-color: #6ee7b7 !important; }
-        th, td { border: 1px solid #4b5563 !important; padding: 10px 12px; white-space: normal !important; word-break: break-word; }
+        th, td { border: 1px solid #4b5563; padding: 10px 12px; white-space: normal; word-break: break-word; }
+        tbody tr:hover { background-color: rgba(55, 65, 81, 0.5); }
+        .badge-yes { background-color: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 11px; font-weight: bold; }
+        .badge-no { background-color: rgba(239, 68, 68, 0.15); color: #f87171; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 11px; font-weight: bold; }
+        .center { text-align: center; }
+        #noResult { text-align: center; padding: 48px 16px; color: #9ca3af; display: none; }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen font-sans flex flex-col">
-
-    <header class="bg-gray-800 border-b border-gray-700 py-5 sticky top-0 z-50 shadow-xl">
-        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 class="text-xl font-bold tracking-wider text-emerald-400 flex items-center gap-2">
-                📀 <span>DVD ISO Search</span>
-            </h1>
-            <div class="w-full md:w-2/3 flex relative shadow-inner">
-                <input type="text" id="searchInput" placeholder="輸入關鍵字搜尋..." 
-                       class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-l-lg focus:outline-none focus:border-emerald-500 text-white text-sm">
-                <button id="clearBtn" class="absolute right-36 top-2.5 text-gray-400 hover:text-white text-sm hidden">清除</button>
-                <button id="searchBtn" class="bg-emerald-500 hover:bg-emerald-600 text-gray-900 font-bold px-5 py-2.5 text-sm border-r border-emerald-600">搜尋</button>
-                <button id="showAllBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2.5 rounded-r-lg text-sm whitespace-nowrap">列出全部</button>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1>📀 DVD ISO Search</h1>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="輸入關鍵字搜尋...">
+                <button id="clearBtn">清除</button>
+                <button id="searchBtn">搜尋</button>
+                <button id="showAllBtn">列出全部</button>
             </div>
         </div>
     </header>
 
-    <main class="container mx-auto px-4 py-6 flex-grow flex flex-col">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-sm font-semibold text-gray-400">📊 清單檢視 (點擊欄位標頭可排序 ↕️)</h2>
-            <span id="movieCount" class="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-mono font-bold border border-emerald-500/20">連線中...</span>
+    <main>
+        <div class="status-bar">
+            <h2 class="status-title">📊 清單檢視 (點擊欄位標頭可排序 ↕️)</h2>
+            <span id="movieCount">準備連線...</span>
         </div>
-        
-        <div class="bg-gray-800 rounded-xl border border-gray-700 shadow-2xl flex-grow overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[1200px]">
-                <thead><tr id="tableHeadRow" class="text-xs font-bold uppercase sticky top-0 z-10 select-none"></tr></thead>
-                <tbody id="movieTableBody" class="divide-y divide-gray-700/60 text-xs text-gray-300"></tbody>
+        <div class="table-wrap">
+            <table>
+                <thead><tr id="tableHeadRow"></tr></thead>
+                <tbody id="movieTableBody"></tbody>
             </table>
-            <div id="noResult" class="hidden text-center py-20 text-gray-500">🔍 找不到符合條件的影音檔案</div>
+            <div id="noResult">🔍 找不到符合條件的影音檔案</div>
         </div>
     </main>
 
     <script>
-        let dvdDatabase = [], tableHeaders = [], currentSortKey = '', isAscending = true, isShowingAll = false;
-        const el = id => document.getElementById(id);
+        var dvdDatabase = [];
+        var tableHeaders = [];
+        var currentSortKey = '';
+        var isAscending = true;
+        var isShowingAll = false;
+
+        function el(id) { return document.getElementById(id); }
 
         function fetchAndParseData() {
             el('movieCount').textContent = "正在連線讀取 Google 試算表...";
-            const base = 'https://' + '://google.com' + '/spreadsheets/d/';
-            const url = base + '1hvu5MGeDlieav33qFlDuLdDI0U0LQ4CxfxtZ3wc6b5U/gviz/tq?tqx=responseHandler:onSheetLoaded&gid=1459482754';
+            var h = String.fromCharCode(104,116,116,112,115,58,47,47);
+            var d = String.fromCharCode(100,111,99,115,46,103,111,111,103,108,101,46,99,111,109);
+            var p = '/spreadsheets/d/1hvu5MGeDlieav33qFlDuLdDI0U0LQ4CxfxtZ3wc6b5U/gviz/tq?tqx=responseHandler:onSheetLoaded&gid=1459482754';
 
             window.onSheetLoaded = function(res) {
                 try {
-                    if (!res || res.status === 'error') throw new Error('請確認試算表已設為公開檢視');
-                    const cols = res.table.cols, rows = res.table.rows;
-                    tableHeaders = cols.map(c => (c && c.label) ? c.label.trim() : '').filter(Boolean);
-                    let startRow = 0;
+                    if (!res || res.status === 'error') throw new Error('請確認試算表共用權限已設為「知道連結的任何人」');
+                    var cols = res.table.cols;
+                    var rows = res.table.rows;
+                    tableHeaders = [];
 
+                    for (var cIdx = 0; cIdx < cols.length; cIdx++) {
+                        if (cols[cIdx] && cols[cIdx].label && cols[cIdx].label.trim() !== '') {
+                            tableHeaders.push(cols[cIdx].label.trim());
+                        }
+                    }
+
+                    var startRow = 0;
                     if (tableHeaders.length === 0 && rows.length > 0 && rows[0].c) {
                         startRow = 1;
-                        rows[0].c.forEach(c => {
-                            let v = c ? (c.f || c.v || '') : '';
-                            if (v.toString().trim()) tableHeaders.push(v.toString().trim());
-                        });
+                        for (var fIdx = 0; fIdx < rows[0].c.length; fIdx++) {
+                            var fCell = rows[0].c[fIdx];
+                            var fVal = fCell ? (fCell.f || fCell.v || '') : '';
+                            if (fVal.toString().trim() !== '') tableHeaders.push(fVal.toString().trim());
+                        }
                     }
 
                     el('tableHeadRow').innerHTML = '';
-                    tableHeaders.forEach(h => {
-                        const th = document.createElement('th');
-                        th.className = 'py-3.5 px-4 cursor-pointer transition';
-                        th.textContent = h + ' ↕️';
-                        th.onclick = () => sortTable(h);
-                        el('tableHeadRow').appendChild(th);
-                    });
+                    for (var hIdx = 0; hIdx < tableHeaders.length; hIdx++) {
+                        (function(headerName) {
+                            var th = document.createElement('th');
+                            th.textContent = headerName + ' ↕️';
+                            th.onclick = function() { sortTable(headerName); };
+                            el('tableHeadRow').appendChild(th);
+                        })(tableHeaders[hIdx]);
+                    }
 
                     dvdDatabase = [];
-                    for (let i = startRow; i < rows.length; i++) {
-                        if (!rows[i].c) continue;
-                        const item = {};
-                        let hasVal = false;
-                        tableHeaders.forEach((h, idx) => {
-                            const c = rows[i].c[idx];
-                            let v = c ? (c.f !== undefined && c.f !== null ? c.f : c.v) : '';
-                            let str = (v !== null && v !== undefined && v.toString().trim() !== '') ? v.toString().trim() : '-';
-                            item[h] = str;
+                    for (var i = startRow; i < rows.length; i++) {
+                        var r = rows[i];
+                        if (!r || !r.c) continue;
+                        var item = {};
+                        var hasVal = false;
+                        for (var j = 0; j < tableHeaders.length; j++) {
+                            var hName = tableHeaders[j];
+                            var cell = r.c[j];
+                            var val = cell ? (cell.f !== undefined && cell.f !== null ? cell.f : cell.v) : '';
+                            var str = (val !== null && val !== undefined && val.toString().trim() !== '') ? val.toString().trim() : '-';
+                            item[hName] = str;
                             if (str !== '-') hasVal = true;
-                        });
+                        }
                         if (hasVal) dvdDatabase.push(item);
                     }
-                    el('movieCount').textContent = `已載入 ${dvdDatabase.length} 筆資料（${tableHeaders.length} 欄），請輸入關鍵字`;
+                    el('movieCount').textContent = '已載入 ' + dvdDatabase.length + ' 筆資料（' + tableHeaders.length + ' 欄），請輸入關鍵字';
                 } catch (e) {
-                    el('movieCount').textContent = "載入失敗：" + e.message;
+                    el('movieCount').textContent = '載入失敗：' + e.message;
                 }
             };
 
-            const s = document.createElement('script');
-            s.src = url;
-            s.onerror = () => el('movieCount').textContent = "連線失敗，請檢查網路或權限";
+            var s = document.createElement('script');
+            s.src = h + d + p;
+            s.onerror = function() { el('movieCount').textContent = '連線失敗：請確認 Google 試算表共用權限已設為「知道連結的任何人」'; };
             document.body.appendChild(s);
         }
 
         function renderTable(data) {
             el('movieTableBody').innerHTML = '';
-            el('movieCount').textContent = `共顯示 ${data.length} 筆資料`;
-            el('noResult').classList.toggle('hidden', data.length > 0);
+            el('movieCount').textContent = '共顯示 ' + data.length + ' 筆資料';
+            el('noResult').style.display = data.length === 0 ? 'block' : 'none';
 
-            data.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-700/40 transition';
-                tableHeaders.forEach((h, idx) => {
-                    const td = document.createElement('td');
-                    const val = item[h] || '-', low = val.toLowerCase();
-                    if (['yes', 'y', '有', 'true'].includes(low)) {
-                        td.className = 'py-3 px-4 text-center font-mono';
-                        td.innerHTML = `<span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20 font-bold text-[10px]">YES</span>`;
-                    } else if (['no', 'n', '無', 'false'].includes(low)) {
-                        td.className = 'py-3 px-4 text-center font-mono';
-                        td.innerHTML = `<span class="bg-red-500/10 text-red-400 px-2 py-0.5 rounded border border-red-500/20 font-bold text-[10px]">NO</span>`;
+            for (var i = 0; i < data.length; i++) {
+                var item = data[i];
+                var tr = document.createElement('tr');
+                for (var j = 0; j < tableHeaders.length; j++) {
+                    var hName = tableHeaders[j];
+                    var td = document.createElement('td');
+                    var val = item[hName] || '-';
+                    var low = val.toLowerCase();
+
+                    if (low === 'yes' || low === 'y' || low === '有' || low === 'true') {
+                        td.className = 'center';
+                        td.innerHTML = '<span class="badge-yes">YES</span>';
+                    } else if (low === 'no' || low === 'n' || low === '無' || low === 'false') {
+                        td.className = 'center';
+                        td.innerHTML = '<span class="badge-no">NO</span>';
                     } else {
-                        td.className = idx === 0 ? 'py-3 px-4 font-semibold text-gray-200' : 'py-3 px-4 text-gray-300';
+                        if (j === 0) td.style.fontWeight = 'bold';
                         td.textContent = val;
                     }
                     tr.appendChild(td);
-                });
+                }
                 el('movieTableBody').appendChild(tr);
-            });
+            }
         }
 
         function getFilteredData() {
-            const q = el('searchInput').value.toLowerCase().trim();
-            return q ? dvdDatabase.filter(item => tableHeaders.some(h => (item[h] || '').toLowerCase().includes(q))) : [];
+            var q = el('searchInput').value.toLowerCase().trim();
+            if (!q) return [];
+            return dvdDatabase.filter(function(item) {
+                for (var j = 0; j < tableHeaders.length; j++) {
+                    var hName = tableHeaders[j];
+                    if ((item[hName] || '').toLowerCase().indexOf(q) !== -1) return true;
+                }
+                return false;
+            });
         }
 
         function doSearch() {
-            const q = el('searchInput').value.trim();
+            var q = el('searchInput').value.trim();
             isShowingAll = false;
-            el('clearBtn').classList.toggle('hidden', !q);
+            el('clearBtn').style.display = q ? 'inline-block' : 'none';
             if (!q) {
                 el('movieTableBody').innerHTML = '';
-                el('noResult').classList.add('hidden');
-                el('movieCount').textContent = `已載入 ${dvdDatabase.length} 筆資料（${tableHeaders.length} 欄），請輸入關鍵字`;
+                el('noResult').style.display = 'none';
+                el('movieCount').textContent = '已載入 ' + dvdDatabase.length + ' 筆資料（' + tableHeaders.length + ' 欄），請輸入關鍵字';
                 return;
             }
             renderTable(getFilteredData());
@@ -152,19 +196,22 @@
             if (!el('searchInput').value.trim() && !isShowingAll) return;
             isAscending = (currentSortKey === key) ? !isAscending : true;
             currentSortKey = key;
-            const list = isShowingAll ? [...dvdDatabase] : getFilteredData();
-            list.sort((a, b) => {
-                const vA = a[key] || '', vB = b[key] || '';
-                const nA = vA.replace(/,/g, ''), nB = vB.replace(/,/g, '');
-                if (nA && nB && !isNaN(nA) && !isNaN(nB)) return isAscending ? nA - nB : nB - nA;
+            var list = isShowingAll ? dvdDatabase.slice() : getFilteredData();
+            list.sort(function(a, b) {
+                var vA = a[key] || '', vB = b[key] || '';
+                var nA = vA.replace(/,/g, ''), nB = vB.replace(/,/g, '');
+                if (nA && nB && !isNaN(nA) && !isNaN(nB)) return isAscending ? Number(nA) - Number(nB) : Number(nB) - Number(nA);
                 return isAscending ? vA.localeCompare(vB, 'zh-Hant-TW') : vB.localeCompare(vA, 'zh-Hant-TW');
             });
             renderTable(list);
         }
 
-            el('showAllBtn').onclick = () => {
+        el('searchBtn').onclick = doSearch;
+        el('searchInput').oninput = doSearch;
+        el('clearBtn').onclick = function() { el('searchInput').value = ''; doSearch(); };
+        el('showAllBtn').onclick = function() {
             el('searchInput').value = '';
-            el('clearBtn').classList.add('hidden');
+            el('clearBtn').style.display = 'none';
             isShowingAll = true;
             renderTable(dvdDatabase);
         };
@@ -172,4 +219,3 @@
     </script>
 </body>
 </html>
-
