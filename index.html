@@ -59,24 +59,16 @@
         <!-- 表格容器 -->
         <div class="bg-gray-800 rounded-xl border border-gray-700 shadow-2xl flex-grow overflow-hidden flex flex-col">
             <div class="overflow-x-auto custom-scrollbar flex-grow">
-               <table class="w-full table-fixed text-left border-collapse min-w-[1200px]">
-                    <thead>
-    <tr class="bg-blue-600 text-white text-xs font-bold uppercase tracking-wider border-b border-blue-500 sticky top-0 z-10 shadow-sm select-none">
-        <th class="py-3.5 px-4 cursor-pointer hover:bg-blue-700 transition border border-blue-500" onclick="sortTable('Name')">Name (片名) ↕️</th>
-        <th class="py-3.5 px-4 cursor-pointer hover:bg-blue-700 transition border border-blue-500" onclick="sortTable('Folder')">Folder ↕️</th>
-        <th class="py-3.5 px-4 cursor-pointer hover:bg-blue-700 transition border border-blue-500" onclick="sortTable('Category')">Category ↕️</th>
-        <th class="py-3.5 px-4 text-center cursor-pointer hover:bg-blue-700 transition border border-blue-500" onclick="sortTable('Backup')">Backup ↕️</th>
-        <th class="py-3.5 px-4 cursor-pointer hover:bg-blue-700 transition border border-blue-500" onclick="sortTable('Size')">Size ↕️</th>
-        <th class="py-3.5 px-4 text-center cursor-pointer hover:bg-blue-700 transition border border-blue-500" onclick="sortTable('Original File')">Original File ↕️</th>
-        <th class="py-3.5 px-4 cursor-pointer hover:bg-blue-700 transition border border-blue-500" onclick="sortTable('Current Storage')">Current Storage ↕️</th>
-        <th class="py-3.5 px-4 cursor-pointer hover:bg-blue-700 transition border border-blue-500" onclick="sortTable('Backup Site')">Backup Site ↕️</th>
-    </tr>
-</thead>
-
-                    <tbody id="movieTableBody" class="divide-y divide-gray-700/60 text-xs text-gray-300">
-                        <!-- 資料由 JS 自動填入 -->
-                    </tbody>
-                </table>
+               <table class="w-full text-left border-collapse min-w-[1200px]">
+    <thead>
+        <tr id="tableHeadRow" class="text-xs font-bold uppercase tracking-wider sticky top-0 z-10 shadow-sm select-none">
+            <!-- 表頭會由 JavaScript 依據 Google 試算表動態生成 -->
+        </tr>
+    </thead>
+    <tbody id="movieTableBody" class="divide-y divide-gray-700/60 text-xs text-gray-300">
+        <!-- 資料列會由 JavaScript 動態生成 -->
+    </tbody>
+</table>
             </div>
             
             <!-- 無符合資料提示 -->
