@@ -4,303 +4,173 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DVD ISO Search</title>
-    <!-- 引入 Tailwind CSS 美化樣式 -->
     <script src="https://tailwindcss.com"></script>
-<style>
-    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-    thead tr, thead th {
-        background-color: #a7f3d0 !important; /* 柔和的淺薄荷綠 */
-        color: #064e3b !important;            /* 深森林綠字體，對比清晰 */
-    }
-    thead th:hover {
-        background-color: #6ee7b7 !important; /* 滑鼠移過去稍微加深 */
-    }
-    th, td { 
-        border: 1px solid #4b5563 !important; 
-        padding: 10px 12px; 
-        white-space: normal !important; 
-        word-break: break-word; 
-        overflow-wrap: break-word;
-    }
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
-</style>
-    
+    <style>
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+        thead tr, thead th { background-color: #a7f3d0 !important; color: #064e3b !important; }
+        thead th:hover { background-color: #6ee7b7 !important; }
+        th, td { border: 1px solid #4b5563 !important; padding: 10px 12px; white-space: normal !important; word-break: break-word; }
+    </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen font-sans flex flex-col">
 
-    <!-- 頂部導覽列與即時檢索框 -->
     <header class="bg-gray-800 border-b border-gray-700 py-5 sticky top-0 z-50 shadow-xl">
         <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <h1 class="text-xl font-bold tracking-wider text-emerald-400 flex items-center gap-2">
                 📀 <span>DVD ISO Search</span>
             </h1>
-            
-            <!-- 即時模糊搜尋輸入框 -->
             <div class="w-full md:w-2/3 flex relative shadow-inner">
-                <input type="text" id="searchInput" placeholder="關鍵字隨打即搜... (支援片名、硬碟、分類、格式)" 
-                       class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-l-lg focus:outline-none focus:border-emerald-500 text-white placeholder-gray-400 text-sm">
-                <button id="searchBtn" class="bg-emerald-500 hover:bg-emerald-600 text-gray-900 font-bold px-5 py-2.5 transition text-sm border-r border-emerald-600">
-                 搜尋
-                </button>
-                <button id="showAllBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2.5 rounded-r-lg transition text-sm whitespace-nowrap">
-                 列出全部
-                </button>
-
+                <input type="text" id="searchInput" placeholder="輸入關鍵字搜尋..." 
+                       class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-l-lg focus:outline-none focus:border-emerald-500 text-white text-sm">
+                <button id="clearBtn" class="absolute right-36 top-2.5 text-gray-400 hover:text-white text-sm hidden">清除</button>
+                <button id="searchBtn" class="bg-emerald-500 hover:bg-emerald-600 text-gray-900 font-bold px-5 py-2.5 text-sm border-r border-emerald-600">搜尋</button>
+                <button id="showAllBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2.5 rounded-r-lg text-sm whitespace-nowrap">列出全部</button>
             </div>
         </div>
     </header>
 
-    <!-- 主要資料表格呈現區 -->
     <main class="container mx-auto px-4 py-6 flex-grow flex flex-col">
         <div class="flex justify-between items-center mb-4">
-            <h2 id="listTitle" class="text-sm font-semibold text-gray-400 uppercase tracking-wider">📊 清單檢視 (點擊欄位標頭可自由排序 ↕️)</h2>
-            <span id="movieCount" class="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-mono font-bold border border-emerald-500/20">正在連線讀取 DVD ISO list.txt...</span>
+            <h2 class="text-sm font-semibold text-gray-400">📊 清單檢視 (點擊欄位標頭可排序 ↕️)</h2>
+            <span id="movieCount" class="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-mono font-bold border border-emerald-500/20">連線中...</span>
         </div>
         
-        <!-- 表格容器 -->
-        <div class="bg-gray-800 rounded-xl border border-gray-700 shadow-2xl flex-grow overflow-hidden flex flex-col">
-            <div class="overflow-x-auto custom-scrollbar flex-grow">
-               <table class="w-full text-left border-collapse min-w-[1200px]">
-    <thead>
-        <tr id="tableHeadRow" class="text-xs font-bold uppercase tracking-wider sticky top-0 z-10 shadow-sm select-none">
-            <!-- 表頭會由 JavaScript 依據 Google 試算表動態生成 -->
-        </tr>
-    </thead>
-    <tbody id="movieTableBody" class="divide-y divide-gray-700/60 text-xs text-gray-300">
-        <!-- 資料列會由 JavaScript 動態生成 -->
-    </tbody>
-</table>
-            </div>
-            
-            <!-- 無符合資料提示 -->
-            <div id="noResult" class="hidden text-center py-20 text-gray-500">
-                <p class="text-base mb-1">🔍 找不到符合條件的影音檔案</p>
-                <p class="text-xs text-gray-600">請嘗試檢查是否有錯字，或更換其他關鍵字搜尋。</p>
-            </div>
+        <div class="bg-gray-800 rounded-xl border border-gray-700 shadow-2xl flex-grow overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[1200px]">
+                <thead><tr id="tableHeadRow" class="text-xs font-bold uppercase sticky top-0 z-10 select-none"></tr></thead>
+                <tbody id="movieTableBody" class="divide-y divide-gray-700/60 text-xs text-gray-300"></tbody>
+            </table>
+            <div id="noResult" class="hidden text-center py-20 text-gray-500">🔍 找不到符合條件的影音檔案</div>
         </div>
     </main>
 
-    <footer class="bg-gray-950/40 border-t border-gray-800/60 py-3 text-center text-xs text-gray-600 font-mono">
-        Internal Media Database Finder Engine.
-    </footer>
-
-    <!-- 🟢 所有的 JavaScript 邏輯都已經完美收納在下方標籤中，不會再外流到畫面上了 🟢 -->
-           <script>
-        let dvdDatabase = new Array();
-        let tableHeaders = new Array();
-        let currentSortKey = '';
-        let isAscending = true;
-        let isShowingAll = false;
-
-        const tableHeadRow = document.getElementById('tableHeadRow');
-        const tableBody = document.getElementById('movieTableBody');
-        const searchInput = document.getElementById('searchInput');
-        const searchBtn = document.getElementById('searchBtn');
-        const showAllBtn = document.getElementById('showAllBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const movieCount = document.getElementById('movieCount');
-        const noResult = document.getElementById('noResult');
+    <script>
+        let dvdDatabase = [], tableHeaders = [], currentSortKey = '', isAscending = true, isShowingAll = false;
+        const el = id => document.getElementById(id);
 
         function fetchAndParseData() {
-            movieCount.textContent = "正在連線讀取 Google 試算表...";
+            el('movieCount').textContent = "正在連線讀取 Google 試算表...";
+            const url = 'https://' + 'docs' + '://';
 
-            const d1 = 'https://' + 'docs' + '.google.com';
-            const d2 = '/spreadsheets/d/';
-            const sheetId = '1hvu5MGeDlieav33qFlDuLdDI0U0LQ4CxfxtZ3wc6b5U';
-            const gid = '1459482754';
-            const callbackName = 'loadDynamicSheetCallback';
-
-            window[callbackName] = function(response) {
+            window.onSheetLoaded = function(res) {
                 try {
-                    if (!response || response.status === 'error') {
-                        throw new Error('試算表讀取失敗，請確認已開啟「知道連結的任何人均可檢視」');
-                    }
-
-                    const cols = response.table.cols;
-                    const rows = response.table.rows;
-                    tableHeaders = new Array();
-                    let headerRowIndex = -1;
-
-                    cols.forEach(col => {
-                        if (col && col.label && col.label.trim() !== '') {
-                            tableHeaders.push(col.label.trim());
-                        }
-                    });
+                    if (!res || res.status === 'error') throw new Error('請確認試算表已設為公開檢視');
+                    const cols = res.table.cols, rows = res.table.rows;
+                    tableHeaders = cols.map(c => (c && c.label) ? c.label.trim() : '').filter(Boolean);
+                    let startRow = 0;
 
                     if (tableHeaders.length === 0 && rows.length > 0 && rows[0].c) {
-                        headerRowIndex = 0;
-                        rows[0].c.forEach(cell => {
-                            let val = cell ? (cell.f || cell.v || '') : '';
-                            if (val.toString().trim() !== '') {
-                                tableHeaders.push(val.toString().trim());
-                            }
+                        startRow = 1;
+                        rows[0].c.forEach(c => {
+                            let v = c ? (c.f || c.v || '') : '';
+                            if (v.toString().trim()) tableHeaders.push(v.toString().trim());
                         });
                     }
 
-                    renderTableHeaders();
+                    el('tableHeadRow').innerHTML = '';
+                    tableHeaders.forEach(h => {
+                        const th = document.createElement('th');
+                        th.className = 'py-3.5 px-4 cursor-pointer transition';
+                        th.textContent = h + ' ↕️';
+                        th.onclick = () => sortTable(h);
+                        el('tableHeadRow').appendChild(th);
+                    });
 
-                    dvdDatabase = new Array();
-                    for (let i = 0; i < rows.length; i++) {
-                        if (i === headerRowIndex) continue;
-                        const rowCells = rows[i].c;
-                        if (!rowCells) continue;
-
+                    dvdDatabase = [];
+                    for (let i = startRow; i < rows.length; i++) {
+                        if (!rows[i].c) continue;
                         const item = {};
-                        let hasData = false;
-
-                        tableHeaders.forEach((headerName, index) => {
-                            const cell = rowCells[index];
-                            let val = cell ? (cell.f !== undefined && cell.f !== null ? cell.f : cell.v) : '';
-                            let cleanVal = (val !== null && val !== undefined && val.toString().trim() !== '') ? val.toString().trim() : '-';
-                            item[headerName] = cleanVal;
-                            if (cleanVal !== '-') hasData = true;
+                        let hasVal = false;
+                        tableHeaders.forEach((h, idx) => {
+                            const c = rows[i].c[idx];
+                            let v = c ? (c.f !== undefined && c.f !== null ? c.f : c.v) : '';
+                            let str = (v !== null && v !== undefined && v.toString().trim() !== '') ? v.toString().trim() : '-';
+                            item[h] = str;
+                            if (str !== '-') hasVal = true;
                         });
-
-                        if (hasData) {
-                            dvdDatabase.push(item);
-                        }
+                        if (hasVal) dvdDatabase.push(item);
                     }
-
-                    movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料（共 ${tableHeaders.length} 個欄位），請輸入關鍵字搜尋`;
-                } catch (err) {
-                    console.error(err);
-                    movieCount.textContent = "載入失敗：" + err.message;
+                    el('movieCount').textContent = `已載入 ${dvdDatabase.length} 筆資料（${tableHeaders.length} 欄），請輸入關鍵字`;
+                } catch (e) {
+                    el('movieCount').textContent = "載入失敗：" + e.message;
                 }
             };
 
-            const script = document.createElement('script');
-            script.src = d1 + d2 + sheetId + '/gviz/tq?tqx=responseHandler:' + callbackName + '&gid=' + gid;
-            script.onerror = function() {
-                movieCount.textContent = "載入失敗：無法連線至 Google 試算表";
-            };
-            document.body.appendChild(script);
-        }
-
-        function renderTableHeaders() {
-            if (!tableHeadRow) return;
-            tableHeadRow.innerHTML = '';
-            tableHeaders.forEach(header => {
-                const th = document.createElement('th');
-                th.className = 'py-3.5 px-4 cursor-pointer transition border border-gray-400 break-words';
-                th.textContent = header + ' ↕️';
-                th.onclick = () => sortTable(header);
-                tableHeadRow.appendChild(th);
-            });
+            const s = document.createElement('script');
+            s.src = url;
+            s.onerror = () => el('movieCount').textContent = "連線失敗，請檢查網路或權限";
+            document.body.appendChild(s);
         }
 
         function renderTable(data) {
-            tableBody.innerHTML = '';
-            movieCount.textContent = `共顯示 ${data.length} 筆資料`;
-
-            if (data.length === 0) {
-                noResult.classList.remove('hidden');
-                return;
-            }
-            noResult.classList.add('hidden');
+            el('movieTableBody').innerHTML = '';
+            el('movieCount').textContent = `共顯示 ${data.length} 筆資料`;
+            el('noResult').classList.toggle('hidden', data.length > 0);
 
             data.forEach(item => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-700/40 transition duration-150 border-b border-gray-800/40';
-
-                tableHeaders.forEach((header, index) => {
+                tr.className = 'hover:bg-gray-700/40 transition';
+                tableHeaders.forEach((h, idx) => {
                     const td = document.createElement('td');
-                    const val = item[header] || '-';
-                    const lowerVal = val.toLowerCase();
-
-                    if (lowerVal === 'yes' || lowerVal === 'y' || lowerVal === '有' || lowerVal === 'true') {
-                        td.className = 'py-3 px-4 text-center font-mono border border-gray-700';
+                    const val = item[h] || '-', low = val.toLowerCase();
+                    if (['yes', 'y', '有', 'true'].includes(low)) {
+                        td.className = 'py-3 px-4 text-center font-mono';
                         td.innerHTML = `<span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20 font-bold text-[10px]">YES</span>`;
-                    } else if (lowerVal === 'no' || lowerVal === 'n' || lowerVal === '無' || lowerVal === 'false') {
-                        td.className = 'py-3 px-4 text-center font-mono border border-gray-700';
+                    } else if (['no', 'n', '無', 'false'].includes(low)) {
+                        td.className = 'py-3 px-4 text-center font-mono';
                         td.innerHTML = `<span class="bg-red-500/10 text-red-400 px-2 py-0.5 rounded border border-red-500/20 font-bold text-[10px]">NO</span>`;
                     } else {
-                        td.className = index === 0 
-                            ? 'py-3 px-4 font-semibold text-gray-200 break-words border border-gray-700'
-                            : 'py-3 px-4 text-gray-300 break-words border border-gray-700';
+                        td.className = idx === 0 ? 'py-3 px-4 font-semibold text-gray-200' : 'py-3 px-4 text-gray-300';
                         td.textContent = val;
                     }
                     tr.appendChild(td);
                 });
-
-                tableBody.appendChild(tr);
+                el('movieTableBody').appendChild(tr);
             });
         }
 
         function getFilteredData() {
-            const query = searchInput.value.toLowerCase().trim();
-            if (!query) return new Array();
-
-            return dvdDatabase.filter(item =>
-                tableHeaders.some(header => (item[header] || '').toLowerCase().includes(query))
-            );
+            const q = el('searchInput').value.toLowerCase().trim();
+            return q ? dvdDatabase.filter(item => tableHeaders.some(h => (item[h] || '').toLowerCase().includes(q))) : [];
         }
 
         function doSearch() {
-            const query = searchInput.value.trim();
+            const q = el('searchInput').value.trim();
             isShowingAll = false;
-            clearBtn.classList.toggle('hidden', !query);
-
-            if (!query) {
-                tableBody.innerHTML = '';
-                noResult.classList.add('hidden');
-                movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料（共 ${tableHeaders.length} 個欄位），請輸入關鍵字搜尋`;
+            el('clearBtn').classList.toggle('hidden', !q);
+            if (!q) {
+                el('movieTableBody').innerHTML = '';
+                el('noResult').classList.add('hidden');
+                el('movieCount').textContent = `已載入 ${dvdDatabase.length} 筆資料（${tableHeaders.length} 欄），請輸入關鍵字`;
                 return;
             }
-
             renderTable(getFilteredData());
         }
 
         function sortTable(key) {
-            if (!searchInput.value.trim() && !isShowingAll) return;
-
-            if (currentSortKey === key) {
-                isAscending = !isAscending;
-            } else {
-                currentSortKey = key;
-                isAscending = true;
-            }
-
-            const currentData = isShowingAll ? [...dvdDatabase] : getFilteredData();
-
-            currentData.sort((a, b) => {
-                const valA = a[key] || '';
-                const valB = b[key] || '';
-
-                const cleanNumA = valA.replace(/,/g, '');
-                const cleanNumB = valB.replace(/,/g, '');
-                if (cleanNumA !== '' && cleanNumB !== '' && !isNaN(cleanNumA) && !isNaN(cleanNumB)) {
-                    return isAscending ? Number(cleanNumA) - Number(cleanNumB) : Number(cleanNumB) - Number(cleanNumA);
-                }
-
-                return isAscending
-                    ? valA.localeCompare(valB, 'zh-Hans-TW', { sensitivity: 'accent' })
-                    : valB.localeCompare(valA, 'zh-Hans-TW', { sensitivity: 'accent' });
+            if (!el('searchInput').value.trim() && !isShowingAll) return;
+            isAscending = (currentSortKey === key) ? !isAscending : true;
+            currentSortKey = key;
+            const list = isShowingAll ? [...dvdDatabase] : getFilteredData();
+            list.sort((a, b) => {
+                const vA = a[key] || '', vB = b[key] || '';
+                const nA = vA.replace(/,/g, ''), nB = vB.replace(/,/g, '');
+                if (nA && nB && !isNaN(nA) && !isNaN(nB)) return isAscending ? nA - nB : nB - nA;
+                return isAscending ? vA.localeCompare(vB, 'zh-Hant-TW') : vB.localeCompare(vA, 'zh-Hant-TW');
             });
-
-            renderTable(currentData);
+            renderTable(list);
         }
 
-        searchBtn.addEventListener('click', doSearch);
-        searchInput.addEventListener('input', doSearch);
-        clearBtn.addEventListener('click', () => {
-            searchInput.value = '';
-            doSearch();
-        });
-
-        if (showAllBtn) {
-            showAllBtn.addEventListener('click', () => {
-                searchInput.value = '';
-                clearBtn.classList.add('hidden');
-                isShowingAll = true;
-                renderTable(dvdDatabase);
-            });
-        }
-
-        window.addEventListener('DOMContentLoaded', fetchAndParseData);
+        el('searchBtn').onclick = doSearch;
+        el('searchInput').oninput = doSearch;
+        el('clearBtn').onclick = () => { el('searchInput').value = ''; doSearch(); };
+        el('showAllBtn').onclick = () => {
+            el('searchInput').value = '';
+            el('clearBtn').classList.add('hidden');
+            isShowingAll = true;
+            renderTable(dvdDatabase);
+        };
+        window.onload = fetchAndParseData;
     </script>
-
-
 </body>
 </html>
