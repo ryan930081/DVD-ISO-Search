@@ -41,10 +41,13 @@
             <div class="w-full md:w-2/3 flex relative shadow-inner">
                 <input type="text" id="searchInput" placeholder="關鍵字隨打即搜... (支援片名、硬碟、分類、格式)" 
                        class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-l-lg focus:outline-none focus:border-emerald-500 text-white placeholder-gray-400 text-sm">
-                <button id="clearBtn" class="absolute right-24 top-2.5 text-gray-400 hover:text-white text-sm hidden">清除</button>
-                <button id="searchBtn" class="bg-emerald-500 hover:bg-emerald-600 text-gray-900 font-bold px-6 py-2.5 rounded-r-lg transition text-sm">
-                    搜尋
+                <button id="searchBtn" class="bg-emerald-500 hover:bg-emerald-600 text-gray-900 font-bold px-5 py-2.5 transition text-sm border-r border-emerald-600">
+                 搜尋
                 </button>
+                <button id="showAllBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2.5 rounded-r-lg transition text-sm whitespace-nowrap">
+                 列出全部
+                </button>
+
             </div>
         </div>
     </header>
@@ -94,6 +97,8 @@
     const tableBody = document.getElementById('movieTableBody');
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.getElementById('searchBtn');
+    const showAllBtn = document.getElementById('showAllBtn');
+    let isShowingAll = false; // 記錄目前是否處於「列出全部」模式
     const clearBtn = document.getElementById('clearBtn');
     const movieCount = document.getElementById('movieCount');
     const noResult = document.getElementById('noResult');
@@ -241,54 +246,65 @@
     }
 
     function doSearch() {
-        const query = searchInput.value.trim();
-        clearBtn.classList.toggle('hidden', !query);
+    const query = searchInput.value.trim();
+    isShowingAll = false; // 只要在搜尋框打字或按清除，就切回搜尋模式
+    clearBtn.classList.toggle('hidden', !query);
 
-        if (!query) {
-            tableBody.innerHTML = '';
-            noResult.classList.add('hidden');
-            movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料（共 ${tableHeaders.length} 個欄位），請輸入關鍵字搜尋`;
-            return;
-        }
-
-        renderTable(getFilteredData());
+    if (!query) {
+        tableBody.innerHTML = '';
+        noResult.classList.add('hidden');
+        movieCount.textContent = `已載入 ${dvdDatabase.length} 筆資料（共 ${tableHeaders.length} 個欄位），請輸入關鍵字搜尋`;
+        return;
     }
 
-    // 動態欄位排序（自動判斷純數字大小或文字筆畫）
-    function sortTable(key) {
-        if (!searchInput.value.trim()) return;
+    renderTable(getFilteredData());
+}
 
-        if (currentSortKey === key) {
-            isAscending = !isAscending;
-        } else {
-            currentSortKey = key;
-            isAscending = true;
+function sortTable(key) {
+    // 只有在「無關鍵字」且「非列出全部模式」時才禁止排序
+    if (!searchInput.value.trim() && !isShowingAll) return;
+
+    if (currentSortKey === key) {
+        isAscending = !isAscending;
+    } else {
+        currentSortKey = key;
+        isAscending = true;
+    }
+
+    // 依據目前模式決定要排序「全部資料」還是「搜尋結果」
+    const currentData = isShowingAll ? [...dvdDatabase] : getFilteredData();
+    
+    currentData.sort((a, b) => {
+        const valA = a[key] || '';
+        const valB = b[key] || '';
+
+        const cleanNumA = valA.replace(/,/g, '');
+        const cleanNumB = valB.replace(/,/g, '');
+        if (cleanNumA !== '' && cleanNumB !== '' && !isNaN(cleanNumA) && !isNaN(cleanNumB)) {
+            return isAscending ? Number(cleanNumA) - Number(cleanNumB) : Number(cleanNumB) - Number(cleanNumA);
         }
 
-        const currentData = getFilteredData();
-        currentData.sort((a, b) => {
-            const valA = a[key] || '';
-            const valB = b[key] || '';
+        return isAscending
+            ? valA.localeCompare(valB, 'zh-Hans-TW', { sensitivity: 'accent' })
+            : valB.localeCompare(valA, 'zh-Hans-TW', { sensitivity: 'accent' });
+    });
 
-            // 若該欄位為純數字（含千分位逗號，如 Size），則依數值大小排序
-            const cleanNumA = valA.replace(/,/g, '');
-            const cleanNumB = valB.replace(/,/g, '');
-            if (cleanNumA !== '' && cleanNumB !== '' && !isNaN(cleanNumA) && !isNaN(cleanNumB)) {
-                return isAscending ? Number(cleanNumA) - Number(cleanNumB) : Number(cleanNumB) - Number(cleanNumA);
-            }
+    renderTable(currentData);
+}
 
-            return isAscending
-                ? valA.localeCompare(valB, 'zh-Hans-TW', { sensitivity: 'accent' })
-                : valB.localeCompare(valA, 'zh-Hans-TW', { sensitivity: 'accent' });
-        });
-
-        renderTable(currentData);
-    }
 
     searchBtn.addEventListener('click', doSearch);
     searchInput.addEventListener('input', doSearch);
     clearBtn.addEventListener('click', () => {
-        searchInput.value = '';
+    searchInput.value = '';
+    showAllBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    clearBtn.classList.add('hidden');
+    isShowingAll = true;
+    renderTable(dvdDatabase);
+    movieCount.textContent = `目前顯示全部 ${dvdDatabase.length} 筆資料`;
+});
+
         doSearch();
     });
 
